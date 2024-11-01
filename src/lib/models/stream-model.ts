@@ -11,6 +11,11 @@ const StreamModel = new mongoose.Schema({
   active: { type: Boolean, enum: [true, false] },
 });
 
+// Set `audios` to be an empty array by default
+StreamModel.path("audios").default([]);
+
+StreamModel.path("active").default(false);
+
 const Streams =
   mongoose.models?.Stream || mongoose.model("Stream", StreamModel);
 
