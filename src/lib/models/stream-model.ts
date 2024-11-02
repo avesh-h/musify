@@ -1,10 +1,12 @@
 import mongoose from "mongoose";
 
 const StreamModel = new mongoose.Schema({
-  audios: [
+  streams: [
     {
       url: String,
       upvotes: [{ type: mongoose.Types.ObjectId, ref: "Users", unique: true }],
+      image: String,
+      title: String,
     },
   ],
   spaceId: { type: mongoose.Types.ObjectId, ref: "Space" },
@@ -12,7 +14,7 @@ const StreamModel = new mongoose.Schema({
 });
 
 // Set `audios` to be an empty array by default
-StreamModel.path("audios").default([]);
+StreamModel.path("streams").default([]);
 
 StreamModel.path("active").default(false);
 
