@@ -29,3 +29,15 @@ const connectToDB = async () => {
 };
 
 export default connectToDB;
+
+// For just close the db connection whenever the process is close.
+process.on("SIGINT", async (): Promise<void> => {
+  try {
+    await mongoose.connection.close();
+    console.log("DB connection closed!");
+    process.exit(0);
+  } catch (error) {
+    console.error("Error closing DB connection:", error);
+    process.exit(1); // for let know the process that the connection didn't close get error.
+  }
+});

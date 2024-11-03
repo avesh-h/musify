@@ -5,7 +5,7 @@ import connectToDB from "@/lib/config/dbConfig";
 import Streams from "@/lib/models/stream-model";
 
 export const GET = async (req: NextRequest, { params }: { params: any }) => {
-  const spaceId = params?.["id"];
+  const { id: spaceId } = await params;
   try {
     await connectToDB();
     const space = await Streams.find({ spaceId });
@@ -25,9 +25,9 @@ export const GET = async (req: NextRequest, { params }: { params: any }) => {
 };
 
 export const POST = async (req: NextRequest, { params }: { params: any }) => {
-  const spaceId = params?.["id"];
-  const streamObj = await req.json();
   //Get the video details based on the url and then fetch the thumbnails and title into updated object.
+  const { id: spaceId } = await params;
+  const streamObj = await req.json();
   try {
     await connectToDB();
     const stream = await Streams.find({ spaceId });

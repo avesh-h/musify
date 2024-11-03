@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 
-const VideoUrlForm = () => {
+import axios from "axios";
+
+const VideoUrlForm = ({ spaceId }: { spaceId: string }) => {
   const [videoUrl, setVideoUrl] = useState<string>("");
 
   // Helper function to extract video ID from a YouTube URL
@@ -12,13 +14,29 @@ const VideoUrlForm = () => {
   };
 
   //Handle submit that add song into the queue
-  const handleAddToQueue = () => {
-    //Make post api to add audio to the stream
-    const videoId = extractVideoId(videoUrl);
+  const handleAddToQueue = async () => {
+    try {
+      //Make post api to add audio to the stream
+      const videoId = extractVideoId(videoUrl);
 
-    //push into the queue by api call
+      const payload = {
+        url: videoUrl,
+      };
 
-    console.log("videooooooooo", videoId);
+      //push into the queue by api call
+      const res = await axios.post(
+        `http://localhost:3000/api/spaces/${spaceId}`,
+        payload
+      );
+
+      if (res.data.data.status === "success") {
+        console.log("Successfully added!");
+      }
+
+      console.log("videooooooooo", videoId);
+    } catch (error) {
+      console.log("axisssssss", error);
+    }
     //clear the state
     setVideoUrl("");
   };
