@@ -48,6 +48,7 @@ const VideoPlayer = ({ currentVideo, playNext }: Props) => {
     //Play Next audio from the queue
     player.on("stateChange", (event: any) => {
       if (event.data === 0) {
+        //Delete the current video from the db via api call
         playNext();
       }
     });

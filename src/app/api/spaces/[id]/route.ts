@@ -2,19 +2,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import connectToDB from "@/lib/config/dbConfig";
+import Spaces from "@/lib/models/space-model";
 import Streams from "@/lib/models/stream-model";
 
 export const GET = async (req: NextRequest, { params }: { params: any }) => {
   const { id: spaceId } = await params;
   try {
     await connectToDB();
-    const space = await Streams.find({ spaceId });
+    const space = await Spaces.find({ _id: spaceId }).populate("streams");
+
     if (!space) {
       return NextResponse.json(
         { error: "Not found!", status: "failed" },
         { status: 404 }
       );
     }
+
     return NextResponse.json(
       { streams: space?.[0]?.streams, status: "success" },
       { status: 200 }
@@ -30,15 +33,18 @@ export const POST = async (req: NextRequest, { params }: { params: any }) => {
   const streamObj = await req.json();
   try {
     await connectToDB();
-    const stream = await Streams.find({ spaceId });
-    if (!stream) {
-      return NextResponse.json(
-        { error: "Not found!", status: "failed" },
-        { status: 404 }
-      );
-    }
-    //add object in stream
-    await Streams.updateOne({ spaceId }, { $push: { streams: streamObj } });
+
+    // Create stream
+    // TODO: call youtube search api get the thumnails and images from it and update the stream object.
+    const createdStream = new Streams(streamObj);
+    await createdStream.save();
+
+    // Add new stream in streams of space
+    await Spaces.findByIdAndUpdate(
+      spaceId,
+      { $push: { streams: createdStream?._id } },
+      { new: true }
+    );
 
     return NextResponse.json(
       { message: "Successfully added into the queue!" },
@@ -48,3 +54,17 @@ export const POST = async (req: NextRequest, { params }: { params: any }) => {
     console.log("errror", error);
   }
 };
+
+// export const PUT = async (req: NextRequest, { params }: { params: any }) => {
+//   const { id: spaceId } = await params;
+//   const videoId = await req.json();
+//   try {
+//     await connectToDB();
+//     const updatedStream = await Streams.updateOne(
+//       { spaceId },
+//       { $pull: { streams: videoId } }
+//     );
+//   } catch (error) {
+//     console.log("error", error);
+//   }
+// };

@@ -1,5 +1,6 @@
-import Streams from "@/lib/models/stream-model";
 import { NextRequest, NextResponse } from "next/server";
+
+import Streams from "@/lib/models/stream-model";
 
 // API for create stream
 export const POST = async (req: NextRequest) => {
