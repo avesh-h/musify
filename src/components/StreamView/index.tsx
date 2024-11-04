@@ -53,7 +53,11 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
       </div>
       <div className="flex flex-col w-2/5">
         <VideoUrlForm spaceId={spaceId} />
-        <VideoPlayer currentVideo={currentVideo} playNext={playNext} />
+        <VideoPlayer
+          currentVideo={currentVideo}
+          playNext={playNext}
+          spaceId={spaceId}
+        />
       </div>
     </div>
   );

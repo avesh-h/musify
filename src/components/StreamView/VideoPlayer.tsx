@@ -4,16 +4,18 @@
 
 import React, { useRef, useEffect, useState } from "react";
 
+import axios from "axios";
 import YouTubePlayer from "youtube-player";
 
 type Props = {
   currentVideo: any;
   playNext: () => void;
+  spaceId: string;
 };
 
 type YouTubePlayerType = /*unresolved*/ any;
 
-const VideoPlayer = ({ currentVideo, playNext }: Props) => {
+const VideoPlayer = ({ currentVideo, playNext, spaceId }: Props) => {
   const [videoPlayer, setVideoPlayer] = useState<YouTubePlayerType | null>(
     null
   );
@@ -26,6 +28,14 @@ const VideoPlayer = ({ currentVideo, playNext }: Props) => {
       /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
     );
     return match ? match[1] : null;
+  };
+
+  // Remove stream from queue
+  const removeStreamFromQueue = async (videoId: string) => {
+    const res = await axios.put(`http://localhost:3000/api/spaces/${spaceId}`, {
+      videoId,
+    });
+    return res;
   };
 
   useEffect(() => {
@@ -48,8 +58,9 @@ const VideoPlayer = ({ currentVideo, playNext }: Props) => {
     //Play Next audio from the queue
     player.on("stateChange", (event: any) => {
       if (event.data === 0) {
-        //Delete the current video from the db via api call
         playNext();
+        //Delete the current video from the db via api call
+        removeStreamFromQueue(currentVideo?._id);
       }
     });
 

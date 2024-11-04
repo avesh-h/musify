@@ -55,16 +55,27 @@ export const POST = async (req: NextRequest, { params }: { params: any }) => {
   }
 };
 
-// export const PUT = async (req: NextRequest, { params }: { params: any }) => {
-//   const { id: spaceId } = await params;
-//   const videoId = await req.json();
-//   try {
-//     await connectToDB();
-//     const updatedStream = await Streams.updateOne(
-//       { spaceId },
-//       { $pull: { streams: videoId } }
-//     );
-//   } catch (error) {
-//     console.log("error", error);
-//   }
-// };
+export const PUT = async (req: NextRequest, { params }: { params: any }) => {
+  const { id: spaceId } = await params;
+  const { videoId } = await req.json();
+  try {
+    await connectToDB();
+    // check first that video is exist in both space and streams
+    //Remove song from the streams collection
+    await Streams.findByIdAndDelete(videoId);
+    //Remove song from the space
+    await Spaces.findByIdAndUpdate(
+      spaceId,
+      {
+        $pull: { streams: videoId },
+      },
+      { new: true }
+    );
+    return NextResponse.json(
+      { message: "Successfully removed!", status: "success" },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.log("error", error);
+  }
+};
