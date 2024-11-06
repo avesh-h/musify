@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// eslint-disable-next-line import/order
 import { NextRequest, NextResponse } from "next/server";
+
+//@ts-ignore
+import youtubesearchapi from "youtube-search-api";
 
 import connectToDB from "@/lib/config/dbConfig";
 import Spaces from "@/lib/models/space-model";
@@ -33,6 +38,26 @@ export const POST = async (req: NextRequest, { params }: { params: any }) => {
   const streamObj = await req.json();
   try {
     await connectToDB();
+
+    const videoDetails = await youtubesearchapi?.GetVideoDetails(
+      streamObj?.videoId
+    );
+
+    // Getting thumbnails
+    // const thumbnails = videoDetails?.thumbnail?.thumbnails?.sort(
+    //   (a: { width: number }, b: { width: number }) =>
+    //     a?.width > b?.width ? -1 : 1
+    // );
+
+    if (videoDetails) {
+      streamObj.title = videoDetails?.title;
+      streamObj.thumbnails = videoDetails?.thumbnail?.thumbnails;
+      // streamObj.smallImg =
+      //   thumbnails?.length > 1
+      //     ? thumbnails[thumbnails?.length - 2]?.url
+      //     : thumbnails[thumbnails?.length - 1]?.url ?? "";
+      // streamObj.bigImg = thumbnails[thumbnails?.length - 1]?.url ?? "";
+    }
 
     // Create stream
     // TODO: call youtube search api get the thumnails and images from it and update the stream object.

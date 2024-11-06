@@ -43,28 +43,34 @@ const VideoPlayer = ({ currentVideo, playNext, spaceId }: Props) => {
       return;
     }
 
-    // 'loadVideoById' is queued until the player is ready to receive API calls.
     const player: any = YouTubePlayer(videoRef.current);
+    (async () => {
+      //Create state so we can use the player events like play or pause event outside the effect
+      //Youtube video id need to add for play
+      setVideoPlayer(player);
 
-    //Create state so we can use the player events like play or pause event outside the effect
-    // setVideoPlayer(player);
+      // 'loadVideoById' is queued until the player is ready to receive API calls.
+      const load = await player.loadVideoById(
+        extractVideoId(currentVideo?.url)
+      );
 
-    //Youtube video id need to add for play
-    player.loadVideoById(extractVideoId(currentVideo?.url));
-
-    //Play video (autoplay)
-    player.playVideo();
-
-    //Play Next audio from the queue
-    player.on("stateChange", (event: any) => {
-      if (event.data === 0) {
-        playNext();
-        //Delete the current video from the db via api call
-        removeStreamFromQueue(currentVideo?._id);
+      if (load.id) {
+        //Play video (autoplay)
+        await player.playVideo();
       }
-    });
 
-    // After every unmount clear destroy the player
+      //Play Next audio from the queue
+      player.on("stateChange", (event: any) => {
+        if (event.data === 0) {
+          playNext();
+          //Delete the current video from the db via api call
+          removeStreamFromQueue(currentVideo?._id);
+        }
+      });
+
+      // After every unmount clear destroy the player
+    })();
+
     return () => {
       player.destroy();
     };
@@ -77,6 +83,15 @@ const VideoPlayer = ({ currentVideo, playNext, spaceId }: Props) => {
         Player
         {/* @ts-ignore */}
         <div ref={videoRef} className="w-full" />
+        <button
+          onClick={() => {
+            if (videoPlayer) {
+              playNext();
+            }
+          }}
+        >
+          Play Next
+        </button>
       </div>
     </div>
   );

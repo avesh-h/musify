@@ -21,6 +21,7 @@ const VideoUrlForm = ({ spaceId }: { spaceId: string }) => {
 
       const payload = {
         url: videoUrl,
+        videoId,
       };
 
       //push into the queue by api call
@@ -32,10 +33,8 @@ const VideoUrlForm = ({ spaceId }: { spaceId: string }) => {
       if (res.data.data.status === "success") {
         console.log("Successfully added!");
       }
-
-      console.log("videooooooooo", videoId);
     } catch (error) {
-      console.log("axisssssss", error);
+      console.log("Error", error);
     }
     //clear the state
     setVideoUrl("");
