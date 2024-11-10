@@ -1,20 +1,20 @@
 import React, { useState } from "react";
 
-import axios from "axios";
+import { YT_REGEX } from "@/lib/constants";
+import { socket } from "@/lib/socket";
 
 const VideoUrlForm = ({ spaceId }: { spaceId: string }) => {
   const [videoUrl, setVideoUrl] = useState<string>("");
 
   // Helper function to extract video ID from a YouTube URL
   const extractVideoId = (url: string) => {
-    const match = url.match(
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-    );
+    const match = url.match(YT_REGEX);
     return match ? match[1] : null;
   };
 
   //Handle submit that add song into the queue
   const handleAddToQueue = async () => {
+    //Add validation for check valid url of the youtube
     try {
       //Make post api to add audio to the stream
       const videoId = extractVideoId(videoUrl);
@@ -22,16 +22,11 @@ const VideoUrlForm = ({ spaceId }: { spaceId: string }) => {
       const payload = {
         url: videoUrl,
         videoId,
+        spaceId,
       };
 
-      //push into the queue by api call
-      const res = await axios.post(
-        `http://localhost:3000/api/spaces/${spaceId}`,
-        payload
-      );
-
-      if (res.data.data.status === "success") {
-        console.log("Successfully added!");
+      if (socket) {
+        socket.emit("add_stream", payload);
       }
     } catch (error) {
       console.log("Error", error);

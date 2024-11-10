@@ -7,6 +7,8 @@ import React, { useRef, useEffect, useState } from "react";
 import axios from "axios";
 import YouTubePlayer from "youtube-player";
 
+import { YT_REGEX } from "@/lib/constants";
+
 type Props = {
   currentVideo: any;
   playNext: () => void;
@@ -24,9 +26,7 @@ const VideoPlayer = ({ currentVideo, playNext, spaceId }: Props) => {
 
   // Helper function to extract video ID from a YouTube URL
   const extractVideoId = (url: string) => {
-    const match = url.match(
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-    );
+    const match = url.match(YT_REGEX);
     return match ? match[1] : null;
   };
 

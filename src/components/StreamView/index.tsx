@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import axios from "axios";
+
+import { connectToSocket } from "@/lib/socket";
 
 import Queue from "./Queue";
 import VideoPlayer from "./VideoPlayer";
@@ -21,13 +23,42 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
   const [queue, setQueue] = useState<StreamObj[]>([]);
   const [currentVideo, setCurrentVideo] = useState<StreamObj | null>(null);
 
+  //Websocket testing
+  useEffect(() => {
+    const socket = connectToSocket();
+    //Connect user to selected space with socket
+    socket.on("connect", () => {
+      socket.emit("join_space", spaceId);
+    });
+
+    //Adding song into the queue after added song from url
+    socket.on("added_stream", (song) => {
+      setQueue((queue) => {
+        let finalArr = [];
+        if (queue?.length) {
+          finalArr = [...queue, song];
+        } else {
+          finalArr.push(song);
+        }
+        return finalArr;
+      });
+
+      //If this added song is the first song of the space
+      setCurrentVideo((currVideo) => (!currVideo ? song : currVideo));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [spaceId]);
+
   // Get stream based on the space id
   const getStream = useCallback(async () => {
     const data = await axios.get(`http://localhost:3000/api/spaces/${spaceId}`);
     if (data?.data?.status === "success") {
       setQueue(data?.data?.streams);
 
-      //Set first video object as a current video only for first time
+      //Set first video object as a current video only for first time when get stream list of current space
       if (!currentVideo && data?.data?.streams?.length) {
         setCurrentVideo(data?.data?.streams?.[0]);
       }
