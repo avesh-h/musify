@@ -2,9 +2,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import axios from "axios";
 import YouTubePlayer from "youtube-player";
 
 import { YT_REGEX } from "@/lib/constants";
@@ -17,7 +16,7 @@ type Props = {
 
 type YouTubePlayerType = /*unresolved*/ any;
 
-const VideoPlayer = ({ currentVideo, playNext, spaceId }: Props) => {
+const VideoPlayer = ({ currentVideo, playNext }: Props) => {
   const [videoPlayer, setVideoPlayer] = useState<YouTubePlayerType | null>(
     null
   );
@@ -28,14 +27,6 @@ const VideoPlayer = ({ currentVideo, playNext, spaceId }: Props) => {
   const extractVideoId = (url: string) => {
     const match = url.match(YT_REGEX);
     return match ? match[1] : null;
-  };
-
-  // Remove stream from queue
-  const removeStreamFromQueue = async (videoId: string) => {
-    const res = await axios.put(`http://localhost:3000/api/spaces/${spaceId}`, {
-      videoId,
-    });
-    return res;
   };
 
   useEffect(() => {
@@ -59,17 +50,15 @@ const VideoPlayer = ({ currentVideo, playNext, spaceId }: Props) => {
         await player.playVideo();
       }
 
-      //Play Next audio from the queue
-      player.on("stateChange", (event: any) => {
-        if (event.data === 0) {
-          playNext();
-          //Delete the current video from the db via api call
-          removeStreamFromQueue(currentVideo?._id);
-        }
-      });
-
       // After every unmount clear destroy the player
     })();
+
+    //Play Next audio from the queue
+    player.on("stateChange", (event: any) => {
+      if (event.data === 0) {
+        playNext();
+      }
+    });
 
     return () => {
       player.destroy();

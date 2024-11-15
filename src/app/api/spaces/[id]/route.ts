@@ -83,21 +83,34 @@ export const POST = async (req: NextRequest, { params }: { params: any }) => {
 export const PUT = async (req: NextRequest, { params }: { params: any }) => {
   const { id: spaceId } = await params;
   const { videoId } = await req.json();
+
   try {
     await connectToDB();
-    // check first that video is exist in both space and streams
+    //Remove song from the space
+    // Remove the song from the space's streams array
+    const updatedSpace = await Spaces.findByIdAndUpdate(
+      spaceId,
+      { $pull: { streams: videoId } },
+      { new: true } // Return the updated document
+    );
+
+    const nextVideoIdx =
+      updatedSpace?.streams?.findIndex(
+        (vidId: string) => vidId === updatedSpace?.currentVideo
+      ) + 1;
+
+    // Determine the next video for currentVideo
+    const currentVideoId = updatedSpace.streams[nextVideoIdx] || null; // Use the next available stream, or null if empty
+
+    // Update the currentVideo in the space document
+    await Spaces.findByIdAndUpdate(spaceId, { currentVideo: currentVideoId });
     //Remove song from the streams collection
     await Streams.findByIdAndDelete(videoId);
-    //Remove song from the space
-    await Spaces.findByIdAndUpdate(
-      spaceId,
-      {
-        $pull: { streams: videoId },
-      },
-      { new: true }
-    );
+
+    //update next video as currentVideo
+
     return NextResponse.json(
-      { message: "Successfully removed!", status: "success" },
+      { nextVideoId: updatedSpace.streams[nextVideoIdx], status: "success" },
       { status: 200 }
     );
   } catch (error) {

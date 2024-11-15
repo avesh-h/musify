@@ -23,6 +23,21 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
   const [queue, setQueue] = useState<StreamObj[]>([]);
   const [currentVideo, setCurrentVideo] = useState<StreamObj | null>(null);
 
+  // Remove stream from queue
+  const removeStreamFromQueue = useCallback(async () => {
+    const res = await axios.put(`http://localhost:3000/api/spaces/${spaceId}`, {
+      videoId: currentVideo?._id,
+    });
+    if (res?.data?.nextVideoId) {
+      const nextVideoObj =
+        queue?.find((stream) => stream?._id === res?.data?.nextVideoId) || null;
+
+      setCurrentVideo(nextVideoObj);
+    } else {
+      setCurrentVideo(null);
+    }
+  }, [currentVideo?._id, queue, spaceId]);
+
   //Websocket testing
   useEffect(() => {
     const socket = connectToSocket();
@@ -70,17 +85,15 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
     getStream();
   }, [getStream]);
 
-  const playNext = () => {
-    const nextVideoIdx =
-      queue?.findIndex((stream) => stream?._id === currentVideo?._id) + 1;
-    // set current as a next video obj
-    setCurrentVideo(queue?.[nextVideoIdx]);
-  };
+  //Playnext function
+  const playNext = useCallback(() => {
+    removeStreamFromQueue();
+  }, [removeStreamFromQueue]);
 
   return (
     <div className="flex w-full">
       <div className="w-3/5">
-        <Queue queue={queue} />
+        <Queue queue={queue} spaceId={spaceId} />
       </div>
       <div className="flex flex-col w-2/5">
         <VideoUrlForm spaceId={spaceId} />
