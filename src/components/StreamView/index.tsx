@@ -62,6 +62,10 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
       setCurrentVideo((currVideo) => (!currVideo ? song : currVideo));
     });
 
+    socket.on("upvoted_streams", (updatedStreams) => {
+      setQueue(updatedStreams);
+    });
+
     return () => {
       socket.disconnect();
     };
@@ -93,7 +97,7 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
   return (
     <div className="flex w-full">
       <div className="w-3/5">
-        <Queue queue={queue} spaceId={spaceId} />
+        <Queue queue={queue} spaceId={spaceId} currentVideo={currentVideo} />
       </div>
       <div className="flex flex-col w-2/5">
         <VideoUrlForm spaceId={spaceId} />
