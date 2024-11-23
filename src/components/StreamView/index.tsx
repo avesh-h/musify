@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 "use client";
 
@@ -5,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import axios from "axios";
 
+import { useSocket } from "@/context/SocketContext";
 import { connectToSocket } from "@/lib/socket";
 
 import Queue from "./Queue";
@@ -22,25 +24,21 @@ type StreamObj = {
 const StreamView = ({ spaceId }: { spaceId: string }) => {
   const [queue, setQueue] = useState<StreamObj[]>([]);
   const [currentVideo, setCurrentVideo] = useState<StreamObj | null>(null);
+  const { setSocket, socket }: any = useSocket();
 
   // Remove stream from queue
   const removeStreamFromQueue = useCallback(async () => {
-    const res = await axios.put(`http://localhost:3000/api/spaces/${spaceId}`, {
-      videoId: currentVideo?._id,
-    });
-    if (res?.data?.nextVideoId) {
-      const nextVideoObj =
-        queue?.find((stream) => stream?._id === res?.data?.nextVideoId) || null;
-
-      setCurrentVideo(nextVideoObj);
-    } else {
-      setCurrentVideo(null);
-    }
-  }, [currentVideo?._id, queue, spaceId]);
+    //Need to add socket for remove the song
+    socket?.emit("delete_stream", { spaceId, videoId: currentVideo?._id });
+  }, [currentVideo?._id, socket, spaceId]);
 
   //Websocket testing
   useEffect(() => {
     const socket = connectToSocket();
+
+    //Set context socket
+    setSocket(socket);
+
     //Connect user to selected space with socket
     socket.on("connect", () => {
       socket.emit("join_space", spaceId);
@@ -62,13 +60,26 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
       setCurrentVideo((currVideo) => (!currVideo ? song : currVideo));
     });
 
+    //After upvoted
     socket.on("upvoted_streams", (updatedStreams) => {
       setQueue(updatedStreams);
+    });
+
+    //After removed
+    socket.on("remainning_streams", (data) => {
+      if (data?.nextVideoId) {
+        const nextVideoObj =
+          queue?.find((stream) => stream?._id === data?.nextVideoId) || null;
+        setCurrentVideo(nextVideoObj);
+      } else {
+        setCurrentVideo(null);
+      }
     });
 
     return () => {
       socket.disconnect();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spaceId]);
 
   // Get stream based on the space id
@@ -105,6 +116,7 @@ const StreamView = ({ spaceId }: { spaceId: string }) => {
           currentVideo={currentVideo}
           playNext={playNext}
           spaceId={spaceId}
+          socket={socket}
         />
       </div>
     </div>

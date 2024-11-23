@@ -1,17 +1,24 @@
+"use client";
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
+// import ReactPlayer from "react-player";
+import Image from "next/image";
 import YouTubePlayer from "youtube-player";
 
 import { YT_REGEX } from "@/lib/constants";
+
+// This method of next js is preventing this react-player render to the server.
+// const ReactPlayer = dynamic(() => import("react-player"), { ssr: false });
 
 type Props = {
   currentVideo: any;
   playNext: () => void;
   spaceId: string;
+  socket: any;
 };
 
 type YouTubePlayerType = /*unresolved*/ any;
@@ -34,7 +41,14 @@ const VideoPlayer = ({ currentVideo, playNext }: Props) => {
       return;
     }
 
-    const player: any = YouTubePlayer(videoRef.current);
+    const player: any = YouTubePlayer(videoRef.current, {
+      playerVars: {
+        autoplay: 0, // Auto-start the video
+        controls: 1, // Hide player controls
+        modestbranding: 1, // Hide YouTube logo
+        rel: 0, // Do not show related videos at the end
+      },
+    });
     (async () => {
       //Create state so we can use the player events like play or pause event outside the effect
       //Youtube video id need to add for play
@@ -49,22 +63,32 @@ const VideoPlayer = ({ currentVideo, playNext }: Props) => {
         //Play video (autoplay)
         await player.playVideo();
       }
-
-      // After every unmount clear destroy the player
     })();
 
-    //Play Next audio from the queue
     player.on("stateChange", (event: any) => {
       if (event.data === 0) {
         playNext();
       }
     });
 
+    // After every unmount clear destroy the player
     return () => {
       player.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo]);
+
+  const playHandler = useCallback(() => {
+    if (videoPlayer) {
+      videoPlayer.playVideo();
+    }
+  }, [videoPlayer]);
+
+  const pauseHandler = useCallback(() => {
+    if (videoPlayer) {
+      videoPlayer.pauseVideo();
+    }
+  }, [videoPlayer]);
 
   return (
     <div>
@@ -72,6 +96,21 @@ const VideoPlayer = ({ currentVideo, playNext }: Props) => {
         Player
         {/* @ts-ignore */}
         <div ref={videoRef} className="w-full" />
+        {/* For normal users */}
+        {currentVideo ? (
+          <>
+            <Image
+              height={288}
+              width={288}
+              alt={currentVideo?.title}
+              src={currentVideo?.thumbnails?.[3]?.url}
+              className="h-72 w-full rounded object-cover"
+            />
+            <p className="mt-2 text-center font-semibold">
+              {currentVideo?.title}
+            </p>
+          </>
+        ) : null}
         <button
           onClick={() => {
             if (videoPlayer) {
@@ -82,6 +121,9 @@ const VideoPlayer = ({ currentVideo, playNext }: Props) => {
           Play Next
         </button>
       </div>
+
+      <button onClick={playHandler}>Start Stream</button>
+      <button onClick={pauseHandler}>Pause Stream</button>
     </div>
   );
 };
